@@ -17,15 +17,33 @@ RUN wget -qO- https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/frees
     --exclude='freesurfer/lib/cuda' \
     --exclude='freesurfer/lib/qt'
 
-RUN apt-get install -y python3
-RUN apt-get install -y python3-pip
-RUN pip3 install nibabel
+# Installing and setting up miniconda
+RUN apt-get install -y curl
+RUN curl -sSLO https://repo.continuum.io/miniconda/Miniconda3-4.3.11-Linux-x86_64.sh && \
+    bash Miniconda3-4.3.11-Linux-x86_64.sh -b -p /usr/local/miniconda && \
+    rm Miniconda3-4.3.11-Linux-x86_64.sh
+
+ENV PATH=/usr/local/miniconda/bin:$PATH \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
+#RUN apt-get install -y python3
+#RUN apt-get install -y python3-pip
+RUN pip install nibabel
+RUN conda install -y scikit-learn
+RUN conda install -y ipython
+RUN conda install -y matplotlib
+
+# qc additions
+RUN pip install yattag
+RUN pip install nilearn
+RUN conda install -y pillow
+
 
 RUN apt-get install -y tcsh
 RUN apt-get install -y bc
 RUN apt-get install -y tar libgomp1 perl-modules
 
-RUN apt-get install -y curl
 RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
 RUN apt-get install -y nodejs
 RUN npm install -g bids-validator@0.19.8
@@ -56,7 +74,7 @@ ENV MNI_DATAPATH /opt/freesurfer/mni/data
 ENV FMRI_ANALYSIS_DIR /opt/freesurfer/fsfast
 ENV PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
 ENV MNI_PERL5LIB /opt/freesurfer/mni/lib/perl5/5.8.5
-ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH /opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 ENV PYTHONPATH=""
 RUN echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IC9vcHQvZnJlZXN1cmZlci9saWNlbnNlLnR4dAo=" | base64 -d | sh
 
@@ -68,10 +86,15 @@ RUN 2to3-3.4 -w $FREESURFER_HOME/bin/*.py
 RUN mkdir /scratch
 RUN mkdir /local-scratch
 
+
+
 RUN mkdir -p /code
 COPY run.py /code/run.py
 RUN chmod +x /code/run.py
 
 COPY version /version
+
+COPY qc.py /code/qc.py
+COPY run_qc.py /code/run_qc.py
 
 ENTRYPOINT ["/code/run.py"]

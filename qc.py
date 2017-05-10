@@ -6,7 +6,7 @@ from collections import OrderedDict
 import matplotlib.pylab as plt
 import nibabel as nb
 import numpy as np
-from niworkflows.viz.utils import cuts_from_bbox, robust_set_limits
+# from niworkflows.viz.utils import cuts_from_bbox, robust_set_limits
 from PIL import Image, ImageChops
 from yattag import Doc
 
@@ -57,19 +57,20 @@ def plot_registration(anat_nii, fsid, out_dir, kind,
 
         # Generate nilearn figure
         display = plot_anat(anat_nii, **plot_params)
+
         if ribbon:
             kwargs = {'levels': [0.5], 'linewidths': 0.5}
             display.add_contours(white, colors='b', **kwargs)
             display.add_contours(pial, colors='r', **kwargs)
+
         elif subcort:
-            subcort_data = contour.get_data()
-            cm = plt.cm.prism(np.unique(subcort_data))
-            kwargs = {'levels': [0.5], 'linewidths': 0.5}
-            for c, i in enumerate(np.unique(subcort_data)):
-                subcort_roi = subcort_data.copy()
-                subcort_roi[subcort_roi != i] = 0
-                subcort_sel = image.new_img_like(contour, subcort_roi)
-                display.add_contours(subcort_sel, colors=[cm[c]], **kwargs)
+            display = plotting.plot_roi(contour, anat_nii, cmap="prism", **plot_params)
+            # subcort_data = contour.get_data()
+            # cm = plt.cm.prism(np.unique(subcort_data))
+            # kwargs = {'levels': [0.5], 'linewidths': .5}
+            # for c, i in enumerate(np.unique(subcort_data)):
+            #     subcort_sel = image.new_img_like(contour, subcort_data == i)
+            #     display.add_contours(subcort_sel, colors=[cm[c]], **kwargs)
 
         elif contour is not None:
             display.add_contours(contour, levels=[.9])
@@ -78,6 +79,39 @@ def plot_registration(anat_nii, fsid, out_dir, kind,
 
         display.savefig(os.path.join(out_dir, out_file))
         display.close()
+
+def robust_set_limits(data, plot_params):
+    # copy of https://github.com/poldracklab/niworkflows/blob/3d8b6de0bbd99ef4340535d565fb71c905b62ec5/niworkflows/viz/utils.py#L265
+    vmin = np.percentile(data, 15)
+    if plot_params.get('vmin', None) is None:
+        plot_params['vmin'] = vmin
+    if plot_params.get('vmax', None) is None:
+        plot_params['vmax'] = np.percentile(data[data > vmin], 99.8)
+
+    return plot_params
+
+def cuts_from_bbox(mask_nii, cuts=3):
+    # copy of https://github.com/poldracklab/niworkflows/blob/3d8b6de0bbd99ef4340535d565fb71c905b62ec5/niworkflows
+    # /viz/utils.py#L185
+    """Finds equi-spaced cuts for presenting images"""
+    from nibabel.affines import apply_affine
+    mask_data = mask_nii.get_data()
+    B = np.argwhere(mask_data > 0)
+    start_coords = B.min(0)
+    stop_coords = B.max(0) + 1
+
+    vox_coords = []
+    for start, stop in zip(start_coords, stop_coords):
+        inc = abs(stop - start) / (cuts + 1)
+        vox_coords.append([start + (i + 1) * inc for i in range(cuts)])
+
+    ras_coords = []
+    for cross in np.array(vox_coords).T:
+        ras_coords.append(apply_affine(mask_nii.affine, cross).tolist())
+
+    ras_cuts = [list(coords) for coords in np.transpose(ras_coords)]
+    return {k: v for k, v in zip(['x', 'y', 'z'], ras_cuts)}
+
 
 
 def remove_white_margins(image_file):
@@ -166,14 +200,16 @@ def export_subcort(fs_dir, fsid, out_dir):
                           ext="svg")
 
 
+
+
 def create_subject_plots(fs_dir, fsid, out_base="00_qc/images"):
     out_dir = os.path.join(fs_dir, out_base, fsid)
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
     #
-    export_parcellation(fs_dir, fsid, out_dir)
-    export_surf(fs_dir, fsid, out_dir)
     export_subcort(fs_dir, fsid, out_dir)
+    export_surf(fs_dir, fsid, out_dir)
+    export_parcellation(fs_dir, fsid, out_dir)
 
 
 
@@ -191,7 +227,7 @@ def create_subject_report(qc_dir, fsid):
     images = OrderedDict()
     file_prefix = os.path.join("../images", fsid, fsid + "_")
     images["Cortical surfaces"] = {"horizontal": False, "files": ["surf_x.svg", "surf_y.svg", "surf_z.svg"]}
-    images["Subcortical segmentation"] = {"horizontal": False, "files": ["subcort_x.svg", "subcort_z.svg",
+    images["Subcortical segmentation"] = {"horizontal": False, "files": ["subcort_x.svg", "subcort_y.svg",
                                                                          "subcort_z.svg"]}
     images["Cortical parcellation"] = {"horizontal": True, "files": ["parc_lh_lateral.png", "parc_lh_medial.png",
                                                                      "parc_rh_medial.png", "parc_rh_lateral.png"]}
@@ -243,18 +279,18 @@ def create_group_report(qc_dir, fsid_list):
 
 
 
+if __name__ == "__main__":
+    ###
 
-###
+    fs_dir = "/Users/franzliem/Desktop/ds114_test1_freesurfer_precomp_v6.0.0"
+    qc_dir = "/Users/franzliem/Desktop/ds114_test1_freesurfer_precomp_v6.0.0/00_qc"
 
-fs_dir = "/Users/franzliem/Desktop/ds114_test1_freesurfer_precomp_v6.0.0"
-qc_dir = "/Users/franzliem/Desktop/ds114_test1_freesurfer_precomp_v6.0.0/00_qc"
+    fsid = "sub-01"
+    create_subject_plots(fs_dir, fsid)
+    create_subject_report(qc_dir, fsid)
 
-fsid = "sub-01"
-create_subject_plots(fs_dir, fsid)
-create_subject_report(qc_dir, fsid)
+    fsid = "sub-02"
+    create_subject_plots(fs_dir, fsid)
+    create_subject_report(qc_dir, fsid)
 
-fsid = "sub-02"
-create_subject_plots(fs_dir, fsid)
-create_subject_report(qc_dir, fsid)
-
-create_group_report(qc_dir, ["sub-01", "sub-02"])
+    create_group_report(qc_dir, ["sub-01", "sub-02"])
