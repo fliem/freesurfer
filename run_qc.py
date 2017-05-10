@@ -28,7 +28,7 @@ def run(command, env={}, ignore_errors=False):
 
 __version__ = open('/version').read()
 
-parser = argparse.ArgumentParser(description='FreeSurfer recon-all + custom template generation.')
+parser = argparse.ArgumentParser(description='FreeSurfer quality control reports.')
 parser.add_argument('bids_dir', help='The directory with the input dataset '
                     'formatted according to the BIDS standard.')
 parser.add_argument('output_dir', help='The directory where the output files '
