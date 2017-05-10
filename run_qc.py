@@ -56,7 +56,10 @@ if not args.participant_label:
     subject_dirs = glob(os.path.join(args.output_dir, "sub-*"))
     fsid_list = [os.path.basename(subject_dir) for subject_dir in subject_dirs]
 else:
-    fsid_list = ["sub-" + s for s in args.participant_label]
+    fsid_list = []
+    for s in args.participant_label:
+        fsid_list += [os.path.basename(subject_dir) for subject_dir in sorted(glob(os.path.join(args.output_dir,
+                                                                                                "sub-" + s + "*")))]
 
 # workaround for https://mail.nmr.mgh.harvard.edu/pipermail//freesurfer/2016-July/046538.html
 output_dir = os.path.abspath(args.output_dir)
