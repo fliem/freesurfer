@@ -258,6 +258,8 @@ def create_subject_report(qc_dir, fsid):
 def create_group_report(qc_dir, fsid_list):
     image_list = ["surf_ortho.svg", "subcort_ortho.svg", "parc_lh_lateral.png", "parc_lh_medial.png",
                   "parc_rh_medial.png", "parc_rh_lateral.png"]
+    fsid_list = sorted(fsid_list)
+
     doc, tag, text = Doc().tagtext()
     with tag('html'):
         with tag('body'):
