@@ -80,6 +80,7 @@ def plot_registration(anat_nii, fsid, out_dir, kind,
         display.savefig(os.path.join(out_dir, out_file))
         display.close()
 
+
 def robust_set_limits(data, plot_params):
     # copy of https://github.com/poldracklab/niworkflows/blob/3d8b6de0bbd99ef4340535d565fb71c905b62ec5/niworkflows/viz/utils.py#L265
     vmin = np.percentile(data, 15)
@@ -89,6 +90,7 @@ def robust_set_limits(data, plot_params):
         plot_params['vmax'] = np.percentile(data[data > vmin], 99.8)
 
     return plot_params
+
 
 def cuts_from_bbox(mask_nii, cuts=3):
     # copy of https://github.com/poldracklab/niworkflows/blob/3d8b6de0bbd99ef4340535d565fb71c905b62ec5/niworkflows
@@ -111,7 +113,6 @@ def cuts_from_bbox(mask_nii, cuts=3):
 
     ras_cuts = [list(coords) for coords in np.transpose(ras_coords)]
     return {k: v for k, v in zip(['x', 'y', 'z'], ras_cuts)}
-
 
 
 def remove_white_margins(image_file):
@@ -200,8 +201,6 @@ def export_subcort(fs_dir, fsid, out_dir):
                           ext="svg")
 
 
-
-
 def create_subject_plots(fs_dir, fsid, out_base="00_qc/images"):
     out_dir = os.path.join(fs_dir, out_base, fsid)
     if not os.path.isdir(out_dir):
@@ -210,9 +209,6 @@ def create_subject_plots(fs_dir, fsid, out_base="00_qc/images"):
     export_subcort(fs_dir, fsid, out_dir)
     export_surf(fs_dir, fsid, out_dir)
     export_parcellation(fs_dir, fsid, out_dir)
-
-
-
 
 
 #### REPORTS
@@ -255,7 +251,7 @@ def create_subject_report(qc_dir, fsid):
         fi.write(result)
 
 
-def create_group_report(qc_dir, fsid_list):
+def create_group_report(qc_dir, fsid_list, out_name="freesurfer_qc_group_report"):
     image_list = ["surf_ortho.svg", "subcort_ortho.svg", "parc_lh_lateral.png", "parc_lh_medial.png",
                   "parc_rh_medial.png", "parc_rh_lateral.png"]
     fsid_list = sorted(fsid_list)
@@ -276,9 +272,8 @@ def create_group_report(qc_dir, fsid_list):
                                 doc.stag("img", src=image)
 
     result = doc.getvalue()
-    with open(os.path.join(qc_dir, "freesurfer_qc_group_report.html"), "w") as fi:
+    with open(os.path.join(qc_dir, out_name + ".html"), "w") as fi:
         fi.write(result)
-
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ from shutil import rmtree
 import subprocess
 from warnings import warn
 from qc import create_subject_plots, create_subject_report, create_group_report
+import re
 
 
 def run(command, env={}, ignore_errors=False):
@@ -75,3 +76,6 @@ if args.analysis_level == "participant":
 elif args.analysis_level == "group":
     print("Creating group report.")
     create_group_report(qc_dir, fsid_list)
+
+    long_fsid_list = list(filter(re.compile(r"long").search, fsid_list))
+    create_group_report(qc_dir, fsid_list, out_name = "freesurfer_qc_group_report_long")
