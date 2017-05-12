@@ -29,7 +29,7 @@ ENV PATH=/usr/local/miniconda/bin:$PATH \
 
 #RUN apt-get install -y python3
 #RUN apt-get install -y python3-pip
-RUN pip install nibabel
+RUN conda install -y nibabel
 RUN conda install -y scikit-learn
 RUN conda install -y ipython
 RUN conda install -y matplotlib

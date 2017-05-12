@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 import argparse
 import os
-import shutil
-import nibabel
 from glob import glob
 from subprocess import Popen, PIPE
-from shutil import rmtree
 import subprocess
-from warnings import warn
 from qc import create_subject_plots, create_subject_report, create_group_report
 import re
 
