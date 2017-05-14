@@ -86,8 +86,6 @@ RUN 2to3-3.4 -w $FREESURFER_HOME/bin/*.py
 RUN mkdir /scratch
 RUN mkdir /local-scratch
 
-
-
 RUN mkdir -p /code
 COPY run.py /code/run.py
 RUN chmod +x /code/run.py
